@@ -72,11 +72,15 @@ def validate_pin(user_id, unhashed):
     salt = user[5].encode('utf-8')
     new_key = hashlib.pbkdf2_hmac('sha256', unhashed.encode('utf-8'),
                                   salt, 100000, dklen=128)
-    if new_key == user[4]:
+
+    print(str(salt))
+   
+    if str(new_key) == user[4]:
         return True
     else:
         return False
 
+print(validate_pin("1000001", "111111"))
 
 def hash_pin_with_salt(pin, salt):
     """Hash the pin with a given salt and return the key.
@@ -111,8 +115,6 @@ def collect_mult_of_10(msg):
             return decimal_val
         else:
             print("\nInvalid entry.")
-
-
 
 
 def withdraw(amount, user):
@@ -391,7 +393,9 @@ def get_transactions(user_id):
 pin = "111111"
 salt = os.urandom(32)
 key = hash_pin_with_salt(pin, salt)
-# print(get_user_info('1000001'))
+
+
+
 
 # In real setting, the users will insert their cards, and the machine will
 # read off their IDs, so there's no need to validate the values.
