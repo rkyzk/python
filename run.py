@@ -22,24 +22,6 @@ USERS = SHEET.worksheet("users")
 ACCOUNTS = SHEET.worksheet("accounts")
 TRANSACTIONS = SHEET.worksheet("transactions")
 
-def check_id(msg, length):
-    """
-    Prompts the users to enter a number and checks if the input
-    is a whole number with the specified number of digits
-    starting with bank code 1, 2 or 3.
-    :param msg: prompt message
-    :param length: the number of digits
-    :return: the validated number
-    :rtype: str
-    """
-    while True:
-        id = input(msg)
-        if id.isdigit() and len(id) == length:
-            if id[0] in ["1", "2", "3"]:
-                return id
-        else:
-            print("Please enter a valid ID.")
-
 
 def get_user_info(user_id):
     """
@@ -56,47 +38,6 @@ def get_user_info(user_id):
             return user           
     else:
         return None
-
-
-def validate_pin(user_id, unhashed):
-    """
-    Gets the salt and the stored key for the given user ID from the database,
-    hashes the argument "unhashed," and compares the new key with the stored key.
-    Returns "True" if they are identical, otherwise returns "False."
-    :arguments: user_id: user ID
-                unhashed: pin that was entered by the user
-    :return: True or False
-    :rtype: boolean
-    """
-    user = get_user_info(user_id)
-    salt = user[5].encode('utf-8')
-    new_key = hashlib.pbkdf2_hmac('sha256', unhashed.encode('utf-8'),
-                                  salt, 100000, dklen=128)
-
-    print(str(salt))
-   
-    if str(new_key) == user[4]:
-        return True
-    else:
-        return False
-
-print(validate_pin("1000001", "111111"))
-
-def hash_pin_with_salt(pin, salt):
-    """Hash the pin with a given salt and return the key.
-    :argument: pin
-               salt
-    :return: key
-    :rtype: str
-    """
-    key = hashlib.pbkdf2_hmac(
-        'sha256',
-        pin.encode('utf-8'),  # convert the pin to bytes
-        salt,
-        100000,  # number of iterations of SHA256
-        dklen=128  # get a 128-byte key
-        )
-    return key
 
 
 def collect_mult_of_10(msg):
@@ -224,7 +165,7 @@ def validate_val(val):
     :return: True or False
     :rtype: boolean
     """
-    if val in ["0", "0.00"]:
+    if val in ["0", "0.00"] or val.startswith("0"):
         print("Please enter a non-zero value.")
         return False
     elif val.isdigit():
@@ -240,7 +181,7 @@ def validate_val(val):
 def collect_val(msg):
     """
     Prompts users to input a value and validates it
-    with "validate_transfer_val" function.  If "False" is returned,
+    with "validate_val" function.  If "False" is returned,
     prompts them to reenter a valid value.
     Otherwise, if the input "value" is an integer,
     adds two decimal digits ".00" and returns the value.  If "value"
@@ -407,7 +348,7 @@ print("*****************")
 while True:
     # Let the users enter their IDs and check if the input is
     # a 7-digit whole number starting with bank code 1, 2 or 3.
-    user_id = check_id("Enter your user ID: \n")
+    user_id = input("Enter your user ID: \n")
     # Get user info of the given ID from DB.
     # If no user with the ID is found, have the users reenter their IDs.
     user = get_user_info(user_id)
@@ -448,7 +389,6 @@ while True:
     print('b. Deposit')
     print('c. Transfer')
     print('d. View your account balances')
-    print('e. View your recent transactions (from the past 30 days')
     print('f. Exit\n')
     while True:
         choice = input('Enter a-f: \n').lower()
@@ -551,52 +491,7 @@ while True:
             print(f"\nYour checking account ID: {list_balances[1][0]}")
             print(f"Balance: ${list_balances[1][1]}\n")
             break
-        if choice == "e":        # "View your recent transactions" option
-            # Get transaction records of the user.
-            list_trans = get_transactions(user_id)
-            # Sort the records into transactions around the savings account
-            # and those around the checking account.
-            svg_list = []
-            check_list = []
-            for entry in list_trans:
-                # Collect records of the savings account.
-                if entry[0] == "savings":
-                    # Get only date, transaction type, transfer to/from,
-                    # transfer notes and amount
-                    list = []
-                    for n in range(1, 6):
-                        list.append(entry[n])
-                    svg_list.append(list)
-                else:
-                    # Collect records of the checking account.
-                    list = []
-                    for n in range(1, 6):
-                        list.append(entry[n])
-                    check_list.append(list)
-            print(check_list)
-            # Get current balances.
-            list_balances = get_balances(user)
-            # Store the balances of both accounts in variables.
-            svg_balance, check_balance = [list_balances[0][1],
-                                          list_balances[1][1]]
-            # Make a list of headings in the table of
-            # transaction history.
-            headings = ["Date", "Transaction", "Transfer to/from",
-                        "Transfer notes", "Amount"]
-            space = " "
-            # Print the table
-            print("====================================================")
-            print("*Savings account transactions\n")
-            display_with_spaces(headings)
-            print(f"\n{space*78}**Current balance:{space*14}${svg_balance}")
-            print("====================================================")
-            print("*Checking account transactions\n")
-            display_with_spaces(headings)
-            print_row(check_list)
-            print(f"\n{space*78}**Current balance:"
-                f"{space*14}${check_balance}\n")
-            break
-        if choice == "f":  # Exit
+        if choice == "e":  # Exit
             print("Bye.  Have a nice day!")
             exit()
         else:
