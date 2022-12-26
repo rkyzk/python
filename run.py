@@ -36,16 +36,23 @@ def check_id(msg, length):
             print("Please enter a valid ID.")
 
 
-def get_user_id(bank):
+def get_user_info(user_id):
     """
-    Get a list of existing user IDs of the selected bank
-    and return the next available ID for that bank.
-    :argument: bank: bank name
-    :return: user ID
-    :rtype: int
+    Get user Info of the given user ID.
+    :argument: user_id: user ID
+    :return: user info of the given user ID, or "None" if there's no data
+             with the ID.
+    :rtype: User or None
     """
-    pass
+    # Get all data from table "users"
+    users = SHEET.worksheet("users").get_all_values()
+    for user in users:    
+        if user[2] == user_id:
+            return user           
+    else:
+        return None
 
+# print(get_user_info('1000001'))
 
 # In real setting, the users will insert their cards, and the machine will
 # read off their IDs, so there's no need to validate the values.
@@ -60,9 +67,10 @@ while True:
     user_id = check_id("Enter your user ID: \n", 7)
     # Get user info of the given ID from DB.
     # If no user with the ID is found, have the users reenter their IDs.
-    user = get_user_info(int(user_id))
+    user = get_user_info(user_id)
     if user:
         break
     else:
         print("Invalid entry.")
+print('here')
 
