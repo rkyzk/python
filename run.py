@@ -198,6 +198,75 @@ def get_recipient(account_id):
         return None
 
 
+def validate_len(length):
+    """
+    Prompts users to input notes and check the length.
+    If the length is equal to or less than 35 characters,
+    returns the input.  Otherwise prompts them to reenter notes.
+
+    :argument: length: max number of characters in trsfer notes
+    :return: trs_notes: transfer notes
+    :rtype: str
+    """
+    while True:
+        trs_notes = input(f"Enter transfer notes (optional, "
+                          f"max {length} characters): \n")
+        if len(trs_notes) <= length:
+            return trs_notes
+        else:
+            print(f"\nYou entered more than {length} characters.")
+
+
+def validate_val(val):
+    """
+    Returns "True" if the argument "val" is a non-zero
+    whole number or a positive number with two decimal digits.
+    (e.g. '50' or '50.00')
+
+    :argument: val: value to be validated
+    :return: True or False
+    :rtype: boolean
+    """
+    if val in ["0", "0.00"]:
+        print("Please enter a non-zero value.")
+        return False
+    elif val.isdigit():
+        return True
+    elif len(val) < 4:
+        return False
+    elif val[-3] == "." and val[:-3].isdigit() and val[-2:].isdigit():
+        return True
+    else:
+        return False
+
+
+def collect_val(msg):
+    """
+    Prompts users to input a value and validates it
+    with "validate_transfer_val" function.  If "False" is returned,
+    prompts them to reenter a valid value.
+    Otherwise, if the input "value" is an integer,
+    adds two decimal digits ".00" and returns the value.  If "value"
+    already has two decimal digits, returns it as is.
+
+    :argument: msg: prompt message
+    :returns: validated value as is, or adds two decimal digits ".00" to it
+    :rtype: str
+    """
+    while True:
+        value = input(msg)
+        if validate_val(value):
+            if value.isdigit():
+                decimal_val = value + ".00"
+                return decimal_val
+            else:
+                return value
+        else:
+            print("Invalid entry.  Enter values with or without "
+                  "number of cents (e.g. '50' or '50.00').")
+def transfer(amount, user, account_id, recipient, recip_acct_id):
+    pass
+
 pin = "111111"
 salt = os.urandom(32)
 key = hash_pin_with_salt(pin, salt)
@@ -291,49 +360,51 @@ while True:
             # and check the validity of the input.
             recip_acct_id = input("\nEnter the recipient's "
                                          "account ID: \n")
-            if not get_recipient(recip_acct_id):
+            recipient = get_recipient(recip_acct_id)
+            if not recipient:
                 print(f"\nThe given account ID {recip_acct_id} "
                       "is not valid.")
-            
-
-"""
-                    while True:
-                        option = input("Enter 'a' to abort the transaction, "
-                                       "'b' to continue: \n").lower()
-                        if option == "a":
-                            print("Bye.  Have a nice day!")
-                            exit()
-                        elif option == "b":
-                            break
-                        else:
-                            print("\nInvalid entry.")
-                    continue
-                # In case the account ID from which the users want
-                # to transfer the money is entered, tell them to reenter
-                # the right account ID of the recipient.
-                elif int(recip_acct_id) == acct_id:
-                    print("\nYou entered the ID of the account from which "
-                          "you will make a transfer.\nPlease enter "
-                          "the account ID of the recipient.")
-                    continue
+                while True:
+                    option = input("Enter 'a' to abort the transaction, "
+                                   "'b' to continue: \n").lower()
+                    if option == "a":
+                        print("Bye.  Have a nice day!")
+                        exit()
+                    elif option == "b":
+                        break
+                    else:
+                        print("\nInvalid entry.")
+                continue
+            # In case the account ID from which the users want
+            # to transfer the money is entered, tell them to reenter
+            # the right account ID of the recipient.
+            elif recip_acct_id == account_id:
+                print("\nYou entered the ID of the account from which "
+                      "you will make a transfer.\nPlease enter "
+                      "the account ID of the recipient.")
+                continue
             # Collect transfer amount.
             amount = collect_val("Enter the amount "
                                  "you will transfer: \n")
             # If there isn't enough money in the account,
             # print the note below and terminate the program.
-            if not check_balance(acct_id, amount):
-                print("You don't have sufficient money in your "
-                      "account to make this transfer.\n"
-                      "The program will be terminated.")
+            # Get the balance of the user.
+            test = accounts_sheet.col_values(1)
+            row_num = test.index(account_id) + 1
+            row = accounts_sheet.row_values(row_num) 
+            balance = row[5]
+            if Decimal(balance) < Decimal(amount):
+                print("There isn't sufficient money in the account."
+                      "The session will be terminated.")
                 exit()
-            # Have the users enter transfer notes (max 35
-            # characters).  Let them reenter the text if
-            # the length exceeds 35 characters.
+            # Have the users enter transfer notes (max 35 characters).
+            # Let them reenter the text if the length exceeds 35 characters.
             trs_notes = validate_len(35)
             # Print the transfer detail for confirmation.
-            print(f"\nYou will transfer ${amount} to\n{recipient}\n"
-                  f"Account ID: {recip_acct_id}\n"
-                  f"Transaction notes: {trs_notes}")
+            print(f"\nYou will transfer ${amount} to\n"
+                  + " ".join(recipient[0], recipient[1])
+                  + f"Account ID: {recip_acct_id}\n"
+                    f"Transaction notes: {trs_notes}")
             while True:
                 # Ask the users if the transfer can be carried out,
                 # or they want to make changes.
@@ -346,8 +417,7 @@ while True:
                     print("Invalid entry")
             if option == "a":
                 break
-            # Make updates regarding this transfer in the DB
-            transfer(user, acct_id, amount, recipient, recip_acct_id,
-                     trs_notes)
+            # Make updates regarding this transfer
+            transfer(amount, user, account_id, recipient, recip_acct_id)     
             break
 """
