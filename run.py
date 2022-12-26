@@ -407,7 +407,7 @@ print("*****************")
 while True:
     # Let the users enter their IDs and check if the input is
     # a 7-digit whole number starting with bank code 1, 2 or 3.
-    user_id = check_id("Enter your user ID: \n", 7)
+    user_id = check_id("Enter your user ID: \n")
     # Get user info of the given ID from DB.
     # If no user with the ID is found, have the users reenter their IDs.
     user = get_user_info(user_id)
