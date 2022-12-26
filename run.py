@@ -72,5 +72,10 @@ while True:
         break
     else:
         print("Invalid entry.")
-print('here')
+# If the card has been deactivated (if the flag value is set to "s" in table
+# "Users," tell the users to call personnel, and terminate the program.
+if user[8] == "s":
+    print("\nYour card has been deactivatd.\nPlease call "
+          "the number on the back of your card for assistance.")
+    exit()
 
