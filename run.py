@@ -13,9 +13,56 @@ SCOPED_CREDS = CREDS.with_scopes(SCOPE)
 GSPREAD_CLIENT = gspread.authorize(SCOPED_CREDS)
 SHEET = GSPREAD_CLIENT.open('atm-system')
 
-users = SHEET.worksheet('users')
+#users = SHEET.worksheet('users')
+#data = users.get_all_values()
+#print(data)
 
-data = users.get_all_values()
+def check_id(msg, length):
+    """
+    Prompt the users to enter a number and check if the input
+    is a whole number with the specified number of digits
+    starting with bank code 1, 2 or 3.
+    :param msg: prompt message
+    :param length: the number of digits
+    :return: the validated number
+    :rtype: str
+    """
+    while True:
+        id = input(msg)
+        if id.isdigit() and len(id) == length:
+            if id[0] in ["1", "2", "3"]:
+                return id
+        else:
+            print("Please enter a valid ID.")
 
-print(data)
-        
+
+def get_user_id(bank):
+    """
+    Get a list of existing user IDs of the selected bank
+    and return the next available ID for that bank.
+    :argument: bank: bank name
+    :return: user ID
+    :rtype: int
+    """
+    pass
+
+
+# In real setting, the users will insert their cards, and the machine will
+# read off their IDs, so there's no need to validate the values.
+# But in this program I prepared validation since the users will input
+# their IDs manually.
+print("*****************")
+print("     Hello!")
+print("*****************")
+while True:
+    # Let the users enter their IDs and check if the input is
+    # a 7-digit whole number starting with bank code 1, 2 or 3.
+    user_id = check_id("Enter your user ID: \n", 7)
+    # Get user info of the given ID from DB.
+    # If no user with the ID is found, have the users reenter their IDs.
+    user = get_user_info(int(user_id))
+    if user:
+        break
+    else:
+        print("Invalid entry.")
+
