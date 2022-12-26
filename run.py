@@ -1,10 +1,7 @@
 import gspread
 from google.oauth2.service_account import Credentials
-import hashlib
 from decimal import Decimal
 from datetime import datetime, timedelta
-
-import os
 
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -51,7 +48,7 @@ def collect_mult_of_10(msg):
     """
     while True:
         value = input(msg)
-        if value.isdigit() and value not in ["", "0"] and value.endswith("0"):
+        if value.isdigit() and value not in ["", "0"] and value.endswith("0") and not value.startswith("0"):
             decimal_val = ".".join([value, "00"])
             return decimal_val
         else:
@@ -326,18 +323,6 @@ def get_transactions(user_id):
     return list_transactions
 
 
-
-
-
-
-
-pin = "111111"
-salt = os.urandom(32)
-key = hash_pin_with_salt(pin, salt)
-
-
-
-
 # In real setting, the users will insert their cards, and the machine will
 # read off their IDs, so there's no need to validate the values.
 # But in this program I prepared validation since the users will input
@@ -356,32 +341,9 @@ while True:
         break
     else:
         print("Invalid entry.")
-# If the card has been deactivated (if the flag value is set to "s" in table
-# "Users," tell the users to call personnel, and terminate the program.
-if user[8] == "s":
-    print("\nYour card has been deactivatd.\nPlease call "
-          "the number on the back of your card for assistance.")
-    exit()
-# Let the users input their pin.  If they get it wrong 4 times,
-# the card will be deactivated (the flag value of the user will be set to
-# "s" -- "s" for "suspended")
-"""
-n = 0
-while n < 4:
-    unhashed = input('Enter your pin: \n')
-    if validate_pin(user_id, unhashed):
-        print('\nLogin Success\n')
-        break
-    if n < 3:
-        print("The pin is wrong.  Please try again.")
-        n += 1
-    else:
-        n += 1
-"""
 # Set the user's full name into variable "name."
 name = " ".join([user[0], user[1]])
 # Have the users select the transaction they want to make.
-
 while True:
     print(f"Hello {name},\nSelect the type of transaction "
           "you wish to make:\n")
