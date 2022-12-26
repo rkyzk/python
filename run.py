@@ -2,6 +2,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 import hashlib
 from decimal import Decimal
+from datetime import datetime, timedelta
 
 import os
 from pprint import pprint
@@ -27,7 +28,6 @@ def check_id(msg, length):
     Prompts the users to enter a number and checks if the input
     is a whole number with the specified number of digits
     starting with bank code 1, 2 or 3.
-
     :param msg: prompt message
     :param length: the number of digits
     :return: the validated number
@@ -45,7 +45,6 @@ def check_id(msg, length):
 def get_user_info(user_id):
     """
     Gets user Info of the given user ID.
-
     :argument: user_id: user ID
     :return: user info of the given user ID, or "None" if there's no data
              with the ID.
@@ -59,13 +58,16 @@ def get_user_info(user_id):
     else:
         return None
 
+users_sheet = SHEET.worksheet("users")
+accounts_sheet = SHEET.worksheet("accounts")
+transactions_sheet = SHEET.worksheet("transactions")
+
 
 def validate_pin(user_id, unhashed):
     """
     Gets the salt and the stored key for the given user ID from the database,
     hashes the argument "unhashed," and compares the new key with the stored key.
     Returns "True" if they are identical, otherwise returns "False."
-
     :arguments: user_id: user ID
                 unhashed: pin that was entered by the user
     :return: True or False
@@ -103,7 +105,6 @@ def collect_mult_of_10(msg):
     Prompts users to enter a value.
     If the input is a multiple of 10, add two decimal digits ".00"
     and return the value.
-
     :argument: msg: prompt message
     :returns: validated value added with two decimal digits ".00"
     :rtype: str
@@ -125,62 +126,38 @@ def withdraw(amount, user):
     If the balance is greater than "amount,"
     subtracts it by "amount" and sets the new balance to
     "balance" in table "Accounts."
-
     :arguments: amount: amount of money to withdraw
                 user: the user information
     """
     # Get the balance of the user.
-    accounts = SHEET.worksheet("accounts").get_all_values()
-    for account in accounts:
-        if account[0] == user[7]:
-            print(account[5])
-            balance = account[5]
+    test = accounts_sheet.col_values(1)
+    row_num = test.index(user[7]) + 1
+    row = accounts_sheet.row_values(row_num) 
+    balance = row[5]
     if Decimal(balance) < Decimal(amount):
         print("There isn't sufficient money in the account."
               "The session will be terminated.")
         exit()
-
-
-
-
-"""                 
-        # If the old balance is less than "amount," print
-        # the following message and terminate the program.
-        if Decimal(old_balance[0]) < Decimal(amount):
-            print("No sufficient money in the account."
-                  "The session will be terminated.")
-            exit()
-        else:
-            # Calculate the new balance.
-            new_balance = (Decimal(old_balance[0]) - Decimal(amount))
-            # Get the current date and time.
-            date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            # Update the balance in table "Accounts."
-            c.execute('Begin')
-            c.execute("UPDATE Accounts SET balance = '" + str(new_balance)
-                      + "' WHERE acct_id = " + str(user.check_acct_id))
-            # Insert the record of this transaction into table
-            # "Transactions."
-            amt_with_sign = "".join(["-", amount])
-            values = set_trans_values(user.check_acct_id, user.user_id,
-                                      "withdrawal", "NA", "NA",
-                                      amt_with_sign, date)
-     
-            conn.commit()
-            print(f"\n${amount} has been withdrawn from your checking"
-                  f"account.\nPlease take your money and card.")
+    # Calculate the new balance.
+    new_balance = Decimal(balance) - Decimal(amount)
+    # Update the balance
+    accounts_sheet.update(f"F{row_num}", str(new_balance))
+    # Add transaction record
+    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    amt_minus = "".join(["-", amount])
+    data = [user[7], "checking", user[2], "withdrawal", 
+            "NA", "NA", amt_minus, date]
+    transactions_sheet.append_row(data)
+    print(f"\n${amount} has been withdrawn from your checking"
+          f"account.\nPlease take your money and card.")
   
    
-
         
-
 pin = "111111"
 salt = os.urandom(32)
 key = hash_pin_with_salt(pin, salt)
-
-
 # print(get_user_info('1000001'))
-"""
+
 # In real setting, the users will insert their cards, and the machine will
 # read off their IDs, so there's no need to validate the values.
 # But in this program I prepared validation since the users will input
@@ -242,5 +219,5 @@ while True:
                                     "to withdraw in a multiple of 10: $\n")
         # Update the balance and transaction history of the user.
         withdraw(amount, user)
-        break    
-
+        break
+    if choice
