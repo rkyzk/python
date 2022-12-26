@@ -7,7 +7,6 @@ Banking System Application is a Python ATM terminal application.  Users can make
 - The account IDs have 8 digits.  The first number tells which bank the accounts belong to, just as user IDs, and the second number tells if the account is savings or checking account.  ‘1’ indicates savings account, and ‘2’ indicates checking account.  For example, 11000001 is an ID of a savings account at North Bank.  12000001 is an ID of a checking account at North Bank.
 - Each customer should have unique user and account IDs.  
 
-
 ### How to use the program
 - The users will be asked to choose choose which transactions they want to make
 a.  Withdraw
@@ -47,17 +46,14 @@ The money value should be entered in the form of an integer or with values of ce
 D. View your balances
 - The system will obtain the balances of the user’s savings and checking accounts and will display the values in a table.  
 
-E. View your transactions
-- The system will get a list of transaction records of the user from the previous 30 days.  The transaction histories of savings and checking accounts will be shown in separate tables.
-
-F. Exit
+E. Exit
 - The program will be terminated.  
 
 Lastly, after each transaction, the system asks the users if they want to make further transactions.  Until they decide to exit the program, they can continue to make transactions.
 
 ## Future features:
-- Currently I limited the length of transfer notes to 35 characters so the table of transaction history will not be distorted.  In the future, I will find a way to accommodate longer texts with line breaks in the column.  
-- I will add a program to reset pin numbers in case customers forget their pins.
+- I will write program that will have users enter pin numbers for login and a validation system.
+- I will add program to display transaction history.
 
 # Testing:
 - I passed the code through CI Python Linter and confirmed there are no problems.
@@ -66,7 +62,7 @@ Lastly, after each transaction, the system asks the users if they want to make f
 - I tested that all prompt messages are clear and that there’s no confusion for users as to how to use the program.  
 
 ## Bugs:
-
+- While loop didn't function well.  I solved the issue by placing indents correctly.
 
 ## Validator Testing: 
 No errors were returned from https://pep8ci.herokuapp.com
@@ -81,8 +77,4 @@ This project was deployed using Code Institute's mock terminal for Heroku.
 5. Click on Deploy
 
 ## Credits:
-The code to hash the pin with salt was taken from the following site:
-
-[How To Hash Passwords In Python]https://nitratine.net/blog/post/how-to-hash-passwords-in-python/
-
 The section in this readme file "Deployment" was taken from the readme file of Love Sandwiches Project by Code Institute.
