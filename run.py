@@ -150,9 +150,36 @@ def withdraw(amount, user):
     transactions_sheet.append_row(data)
     print(f"\n${amount} has been withdrawn from your checking"
           f"account.\nPlease take your money and card.")
+
+
+def deposit(amount, user):
+    """
+    Gets the balance of the user from table "Accounts."
+    Calculates the new balance and updates table "Accounts"
+    and "Transactions."
+
+    :arguments: amount: amount of money to withdraw
+                user: the user information
+    """
+    # Get the balance of the user.
+    test = accounts_sheet.col_values(1)
+    row_num = test.index(user[7]) + 1
+    row = accounts_sheet.row_values(row_num) 
+    balance = row[5]
+    # Calculate the new balance.
+    new_balance = Decimal(balance) + Decimal(amount)
+    # Update the balance
+    accounts_sheet.update(f"F{row_num}", str(new_balance))
+    # Add transaction record
+    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    amt_plus = "".join(["+", amount])
+    data = [user[7], "checking", user[2], "deposit", 
+            "NA", "NA", amt_plus, date]
+    transactions_sheet.append_row(data)
+    print(f"\n${amount} has been added to your checking"
+          f"account.\nPlease take your card.")
   
-   
-        
+      
 pin = "111111"
 salt = os.urandom(32)
 key = hash_pin_with_salt(pin, salt)
@@ -220,4 +247,9 @@ while True:
         # Update the balance and transaction history of the user.
         withdraw(amount, user)
         break
-    if choice
+    if choice == "b":         # Deposit
+        amount = collect_mult_of_10("Enter how much you are "
+                                    "depositing in a multiple of 10: $\n")
+        # Update the balance and transaction history of the user.
+        deposit(amount, user)
+        break
