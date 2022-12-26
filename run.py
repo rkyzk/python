@@ -343,6 +343,59 @@ def get_balances(user):
     return list
 
 
+def display_with_spaces(item_list):
+    """
+    Prints items in the argument "list" with the numbers of spaces
+    indicated in "list_num."
+
+    :argument: item_list: a record in transaction history
+    """
+    print(item_list[0])
+    """
+    list_num = [25, 20, 30, 35, 10]
+    str = ""
+    for n, item in enumerate(item_list):
+        space = " "
+        num = list_num[n] - len(item)
+        str = "".join([str, item + space*num])
+    print(str)
+    """
+
+
+def print_row(transaction_list):
+    """
+    Using "display_with_spaces" function,
+    prints each row in the argument "list."
+
+    :argument: transaction_list: list of transactions
+    """
+    for item in transaction_list:
+        display_with_spaces(item)
+
+
+def get_transactions(user_id):
+    """
+    Gets all data from table "Transactions" of the given user.
+    """
+    # Get the date time of 30 days ago in string.
+    start_datetime = datetime.now() - timedelta(days=30)
+    start_date_str = start_datetime.strftime("%Y-%m-%d %H:%M:%S")
+    # Get all transaction records of the given user
+    transactions = transactions_sheet.get_all_values()
+    list_transactions = []
+    for transaction in transactions:    
+        if transaction[2] == user_id and transaction[7] >= start_date_str:
+            list = [transaction[7], transaction[3], transaction[4],
+                    transaction[5], transaction[6]]
+            list_transactions.append(list)
+    return list_transactions
+
+
+
+
+
+
+
 pin = "111111"
 salt = os.urandom(32)
 key = hash_pin_with_salt(pin, salt)
@@ -503,3 +556,40 @@ while True:
         print(f"\nYour checking account ID: {list_balances[1][0]}")
         print(f"Balance: ${list_balances[1][1]}\n")
         break
+    if choice == "e":        # "View your recent transactions" option
+        # Get transaction records of the user.
+        list_trans = get_transactions(user_id)
+        # Sort the records into transactions around the savings account
+        # and those around the checking account.
+        svg_list = []
+        check_list = []
+        for entry in list_trans:
+            # Collect records of the savings account.
+            if entry[1] == "savings":
+                svg_list.append(entry)
+            else:
+                # Collect records of the checking account.
+                check_list.append(entry)
+            # Get current balances.
+            list_balances = get_balances(user)
+            # Store the balances of both accounts in variables.
+            svg_balance, check_balance = [list_balances[0][1],
+                                          list_balances[1][1]]
+            # Make a list of headings in the table of
+            # transaction history.
+            headings = ["Date", "Transaction", "Transfer to/from",
+                        "Transfer notes", "Amount"]
+            space = " "
+            # Print the table
+            #print("====================================================")
+            #print("*Savings account transactions\n")
+            display_with_spaces(headings)
+            print_row(svg_list)
+            #print(f"\n{space*78}**Current balance:{space*14}${svg_balance}")
+            #print("====================================================")
+            #print("*Checking account transactions\n")
+            display_with_spaces(headings)
+            print_row(check_list)
+            #print(f"\n{space*78}**Current balance:"
+            #      f"{space*14}${check_balance}\n")
+            break
