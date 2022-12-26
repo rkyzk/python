@@ -2,6 +2,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 from decimal import Decimal
 from datetime import datetime, timedelta
+import hashlib
 
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -18,6 +19,40 @@ SHEET = GSPREAD_CLIENT.open('atm-system')
 USERS = SHEET.worksheet("users")
 ACCOUNTS = SHEET.worksheet("accounts")
 TRANSACTIONS = SHEET.worksheet("transactions")
+
+
+def validate_pin(user_id, salt):
+    if username == "admin963":
+        stored_key = get_admin_pass_info(username)[0]
+        salt = get_admin_pass_info(username)[1]
+        new_key = hash_pin_with_salt(password, salt)
+        if new_key == stored_key:
+            return True
+    return False
+
+def hash_pin_with_salt(pin, salt):
+    """Hash the pin with a given salt and return the key.
+
+    :argument: pin
+               salt
+    :return: key: hashed key
+    :rtype: byte
+    """
+    key = hashlib.pbkdf2_hmac(
+        'sha256',
+        pin.encode('utf-8'),  # convert the pin to bytes
+        salt,
+        100000,  # number of iterations of SHA256
+        dklen=128  # get a 128-byte key
+        )
+    return key
+
+pin = input('Enter your pin: ')
+string_salt = b'\xc9.\xd5\\SE\xd9\x15\x9e\xad[2$R\xdf&K\xfa\xe4E@(MR\x8a\xab\x0b\xb7}\xd2\x93\xbe'
+arr2 = bytes(string_salt, 'utf-8')
+print(string_salt)
+new_key = hash_pin_with_salt(pin, arr2)
+str_stored_key = b'\xfe\x96\xd5\x08s\xf5\x07\xd3a\x7fm\x1b\x80\x8f\xf5a0\xa6V\xf6\x92,Y\xe9Y\xe2\xb0\x11.On\xfb\x7f\x1b/x^\xbbi\x91\xec\x13\xa3c5,1\xf1\xaa\xf6\xd4\x17G]\xba\xd0Z\xc6\xca\x1c<\xe3\x82f\xa2Hv\x1b\xa2W\xf0\x86HK#\x8d\xec\x8f\x95\xf9\xf7\xe0\xd7\x97\x1c\xc5pz\x97&\x07M}\xc4\xc2\xe3\x0c\xe69\xa3Z\xc8\x15f\x00\xff\x82\x1ez\x15\xaeMz\xfa\x9a\xbeO,3XZa\xc1\xbd\xeb\x1dF\xb9'
 
 
 def get_user_info(user_id):
