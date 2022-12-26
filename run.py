@@ -1,6 +1,11 @@
 import gspread
 from google.oauth2.service_account import Credentials
+import hashlib
+from decimal import Decimal
+
+import os
 from pprint import pprint
+
 
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -19,9 +24,10 @@ SHEET = GSPREAD_CLIENT.open('atm-system')
 
 def check_id(msg, length):
     """
-    Prompt the users to enter a number and check if the input
+    Prompts the users to enter a number and checks if the input
     is a whole number with the specified number of digits
     starting with bank code 1, 2 or 3.
+
     :param msg: prompt message
     :param length: the number of digits
     :return: the validated number
@@ -38,11 +44,12 @@ def check_id(msg, length):
 
 def get_user_info(user_id):
     """
-    Get user Info of the given user ID.
+    Gets user Info of the given user ID.
+
     :argument: user_id: user ID
     :return: user info of the given user ID, or "None" if there's no data
              with the ID.
-    :rtype: User or None
+    :rtype: list or None
     """
     # Get all data from table "users"
     users = SHEET.worksheet("users").get_all_values()
@@ -52,8 +59,128 @@ def get_user_info(user_id):
     else:
         return None
 
-# print(get_user_info('1000001'))
 
+def validate_pin(user_id, unhashed):
+    """
+    Gets the salt and the stored key for the given user ID from the database,
+    hashes the argument "unhashed," and compares the new key with the stored key.
+    Returns "True" if they are identical, otherwise returns "False."
+
+    :arguments: user_id: user ID
+                unhashed: pin that was entered by the user
+    :return: True or False
+    :rtype: boolean
+    """
+    user = get_user_info(user_id)
+    salt = user[5].encode('utf-8')
+    new_key = hashlib.pbkdf2_hmac('sha256', unhashed.encode('utf-8'),
+                                  salt, 100000, dklen=128)
+    if new_key == user[4]:
+        return True
+    else:
+        return False
+
+
+def hash_pin_with_salt(pin, salt):
+    """Hash the pin with a given salt and return the key.
+    :argument: pin
+               salt
+    :return: key
+    :rtype: str
+    """
+    key = hashlib.pbkdf2_hmac(
+        'sha256',
+        pin.encode('utf-8'),  # convert the pin to bytes
+        salt,
+        100000,  # number of iterations of SHA256
+        dklen=128  # get a 128-byte key
+        )
+    return key
+
+
+def collect_mult_of_10(msg):
+    """
+    Prompts users to enter a value.
+    If the input is a multiple of 10, add two decimal digits ".00"
+    and return the value.
+
+    :argument: msg: prompt message
+    :returns: validated value added with two decimal digits ".00"
+    :rtype: str
+    """
+    while True:
+        value = input(msg)
+        if value.isdigit() and value not in ["", "0"] and value.endswith("0"):
+            decimal_val = ".".join([value, "00"])
+            return decimal_val
+        else:
+            print("\nInvalid entry.")
+
+
+
+
+def withdraw(amount, user):
+    """
+    Gets the balance of the user from table "Accounts."
+    If the balance is greater than "amount,"
+    subtracts it by "amount" and sets the new balance to
+    "balance" in table "Accounts."
+
+    :arguments: amount: amount of money to withdraw
+                user: the user information
+    """
+    # Get the balance of the user.
+    accounts = SHEET.worksheet("accounts").get_all_values()
+    for account in accounts:
+        if account[0] == user[7]:
+            print(account[5])
+            balance = account[5]
+    if Decimal(balance) < Decimal(amount):
+        print("There isn't sufficient money in the account."
+              "The session will be terminated.")
+        exit()
+
+
+
+
+"""                 
+        # If the old balance is less than "amount," print
+        # the following message and terminate the program.
+        if Decimal(old_balance[0]) < Decimal(amount):
+            print("No sufficient money in the account."
+                  "The session will be terminated.")
+            exit()
+        else:
+            # Calculate the new balance.
+            new_balance = (Decimal(old_balance[0]) - Decimal(amount))
+            # Get the current date and time.
+            date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            # Update the balance in table "Accounts."
+            c.execute('Begin')
+            c.execute("UPDATE Accounts SET balance = '" + str(new_balance)
+                      + "' WHERE acct_id = " + str(user.check_acct_id))
+            # Insert the record of this transaction into table
+            # "Transactions."
+            amt_with_sign = "".join(["-", amount])
+            values = set_trans_values(user.check_acct_id, user.user_id,
+                                      "withdrawal", "NA", "NA",
+                                      amt_with_sign, date)
+     
+            conn.commit()
+            print(f"\n${amount} has been withdrawn from your checking"
+                  f"account.\nPlease take your money and card.")
+  
+   
+
+        
+
+pin = "111111"
+salt = os.urandom(32)
+key = hash_pin_with_salt(pin, salt)
+
+
+# print(get_user_info('1000001'))
+"""
 # In real setting, the users will insert their cards, and the machine will
 # read off their IDs, so there's no need to validate the values.
 # But in this program I prepared validation since the users will input
@@ -78,4 +205,42 @@ if user[8] == "s":
     print("\nYour card has been deactivatd.\nPlease call "
           "the number on the back of your card for assistance.")
     exit()
+# Let the users input their pin.  If they get it wrong 4 times,
+# the card will be deactivated (the flag value of the user will be set to
+# "s" -- "s" for "suspended")
+"""
+n = 0
+while n < 4:
+    unhashed = input('Enter your pin: \n')
+    if validate_pin(user_id, unhashed):
+        print('\nLogin Success\n')
+        break
+    if n < 3:
+        print("The pin is wrong.  Please try again.")
+        n += 1
+    else:
+        n += 1
+"""
+# Set the user's full name into variable "name."
+name = " ".join([user[0], user[1]])
+# Have the users select the transaction they want to make.
+"""
+while True:
+    print(f"Hello {name},\nSelect the type of transaction "
+          "you wish to make:\n")
+    print('a. Withdrawal')
+    print('b. Deposit')
+    print('c. Transfer')
+    print('d. View your account balances')
+    print('e. View your recent transactions (from the past 30 days')
+    print('f. Exit\n')
+"""
+while True:
+    choice = input('Enter a-f: \n').lower()
+    if choice == "a":         # Withdrawal
+        amount = collect_mult_of_10("Enter how much you'd like "
+                                    "to withdraw in a multiple of 10: $\n")
+        # Update the balance and transaction history of the user.
+        withdraw(amount, user)
+        break    
 
