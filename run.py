@@ -5,8 +5,6 @@ from decimal import Decimal
 from datetime import datetime, timedelta
 
 import os
-from pprint import pprint
-
 
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -19,9 +17,10 @@ SCOPED_CREDS = CREDS.with_scopes(SCOPE)
 GSPREAD_CLIENT = gspread.authorize(SCOPED_CREDS)
 SHEET = GSPREAD_CLIENT.open('atm-system')
 
-#users = SHEET.worksheet('users')
-#data = users.get_all_values()
-#print(data)
+# Set worksheets to variables
+USERS = SHEET.worksheet("users")
+ACCOUNTS = SHEET.worksheet("accounts")
+TRANSACTIONS = SHEET.worksheet("transactions")
 
 def check_id(msg, length):
     """
@@ -51,16 +50,12 @@ def get_user_info(user_id):
     :rtype: list or None
     """
     # Get all data from table "users"
-    users = SHEET.worksheet("users").get_all_values()
+    users = USERS.get_all_values()
     for user in users:    
         if user[2] == user_id:
             return user           
     else:
         return None
-
-users_sheet = SHEET.worksheet("users")
-accounts_sheet = SHEET.worksheet("accounts")
-transactions_sheet = SHEET.worksheet("transactions")
 
 
 def validate_pin(user_id, unhashed):
@@ -130,9 +125,9 @@ def withdraw(amount, user):
                 user: the user information
     """
     # Get the balance of the user.
-    test = accounts_sheet.col_values(1)
+    test = ACCOUNTS.col_values(1)
     row_num = test.index(user[7]) + 1
-    row = accounts_sheet.row_values(row_num) 
+    row = ACCOUNTS.row_values(row_num) 
     balance = row[5]
     if Decimal(balance) < Decimal(amount):
         print("There isn't sufficient money in the account."
@@ -141,13 +136,13 @@ def withdraw(amount, user):
     # Calculate the new balance.
     new_balance = Decimal(balance) - Decimal(amount)
     # Update the balance
-    accounts_sheet.update(f"F{row_num}", str(new_balance))
+    ACCOUNTS.update(f"F{row_num}", str(new_balance))
     # Add transaction record
     date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     amt_minus = "".join(["-", amount])
     data = [user[7], "checking", user[2], "withdrawal", 
             "NA", "NA", amt_minus, date]
-    transactions_sheet.append_row(data)
+    TRANSACTIONS.append_row(data)
     print(f"\n${amount} has been withdrawn from your checking"
           f"account.\nPlease take your money and card.")
 
@@ -162,20 +157,20 @@ def deposit(amount, user):
                 user: the user information
     """
     # Get the balance of the user.
-    test = accounts_sheet.col_values(1)
+    test = ACCOUNTS.col_values(1)
     row_num = test.index(user[7]) + 1
-    row = accounts_sheet.row_values(row_num) 
+    row = ACCOUNTS.row_values(row_num) 
     balance = row[5]
     # Calculate the new balance.
     new_balance = Decimal(balance) + Decimal(amount)
     # Update the balance
-    accounts_sheet.update(f"F{row_num}", str(new_balance))
+    ACCOUNTS.update(f"F{row_num}", str(new_balance))
     # Add transaction record
     date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     amt_plus = "".join(["+", amount])
     data = [user[7], "checking", user[2], "deposit", 
             "NA", "NA", amt_plus, date]
-    transactions_sheet.append_row(data)
+    TRANSACTIONS.append_row(data)
     print(f"\n${amount} has been added to your checking"
           f"account.\nPlease take your card.")
 
@@ -190,7 +185,7 @@ def get_recipient(account_id):
     :rtype: list or None
     """
     # Get all data from table "users"
-    users = SHEET.worksheet("users").get_all_values()
+    users = USERS.get_all_values()
     for user in users:    
         if account_id in [user[6], user[7]]:
             return user           
@@ -278,14 +273,14 @@ def transfer(amount, user, account_id, recipient, recip_acct_id, trs_notes):
                 recip_acct_id: the recipient's account ID
     """
     # Get the balance of the sender.
-    test = accounts_sheet.col_values(1)
+    test = ACCOUNTS.col_values(1)
     row_num = test.index(account_id) + 1
-    row = accounts_sheet.row_values(row_num) 
+    row = ACCOUNTS.row_values(row_num) 
     balance = row[5]
     # Calculate the new balance.
     new_balance = Decimal(balance) - Decimal(amount)
     # Update the balance
-    accounts_sheet.update(f"F{row_num}", str(new_balance))
+    ACCOUNTS.update(f"F{row_num}", str(new_balance))
     # Add transaction record
     date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     amt_minus = "".join(["-", amount])
@@ -297,16 +292,16 @@ def transfer(amount, user, account_id, recipient, recip_acct_id, trs_notes):
     trs_person = " ".join(["to", recip_name])
     data = [account_id, account_type, user[2], "transfer sent", 
             trs_person, trs_notes, amt_minus, date]
-    transactions_sheet.append_row(data)
+    TRANSACTIONS.append_row(data)
     # Calculate and update the recipient's database
-    test = accounts_sheet.col_values(1)
+    test = ACCOUNTS.col_values(1)
     row_num = test.index(recip_acct_id) + 1
-    row = accounts_sheet.row_values(row_num) 
+    row = ACCOUNTS.row_values(row_num) 
     balance = row[5]
     # Calculate the new balance.
     new_balance = Decimal(balance) + Decimal(amount)
     # Update the balance
-    accounts_sheet.update(f"F{row_num}", str(new_balance))
+    ACCOUNTS.update(f"F{row_num}", str(new_balance))
     # Add transaction record
     amt_plus = "".join(["+", amount])
     if recip_acct_id[1] == "1":
@@ -317,7 +312,7 @@ def transfer(amount, user, account_id, recipient, recip_acct_id, trs_notes):
     trs_person = " ".join(["from", sender_name])
     data = [recip_acct_id, account_type, recipient[2], "transfer received", 
             trs_person, trs_notes, amt_plus, date]
-    transactions_sheet.append_row(data)
+    TRANSACTIONS.append_row(data)
     print(f"\n${amount} has been transferred.\n"\
           "Please take your card.")
 
@@ -332,12 +327,12 @@ def get_balances(user):
     :rtype: list
     """
     # Get savings account info
-    test = accounts_sheet.col_values(1)
+    test = ACCOUNTS.col_values(1)
     row_num = test.index(user[6]) + 1
-    row = accounts_sheet.row_values(row_num) 
+    row = ACCOUNTS.row_values(row_num) 
     svg_balance = [user[6], row[5]]
     row_num = test.index(user[7]) + 1
-    row = accounts_sheet.row_values(row_num) 
+    row = ACCOUNTS.row_values(row_num) 
     check_balance = [user[7], row[5]]
     list = [svg_balance, check_balance]
     return list
@@ -350,16 +345,13 @@ def display_with_spaces(item_list):
 
     :argument: item_list: a record in transaction history
     """
-    print(item_list[0])
-    """
     list_num = [25, 20, 30, 35, 10]
     str = ""
+    space = " "
     for n, item in enumerate(item_list):
-        space = " "
         num = list_num[n] - len(item)
         str = "".join([str, item + space*num])
     print(str)
-    """
 
 
 def print_row(transaction_list):
@@ -370,7 +362,7 @@ def print_row(transaction_list):
     :argument: transaction_list: list of transactions
     """
     for item in transaction_list:
-        display_with_spaces(item)
+        print(item)
 
 
 def get_transactions(user_id):
@@ -381,11 +373,11 @@ def get_transactions(user_id):
     start_datetime = datetime.now() - timedelta(days=30)
     start_date_str = start_datetime.strftime("%Y-%m-%d %H:%M:%S")
     # Get all transaction records of the given user
-    transactions = transactions_sheet.get_all_values()
+    transactions = TRANSACTIONS.get_all_values()
     list_transactions = []
     for transaction in transactions:    
         if transaction[2] == user_id and transaction[7] >= start_date_str:
-            list = [transaction[7], transaction[3], transaction[4],
+            list = [transaction[1], transaction[7], transaction[3], transaction[4],
                     transaction[5], transaction[6]]
             list_transactions.append(list)
     return list_transactions
@@ -444,7 +436,7 @@ while n < 4:
 # Set the user's full name into variable "name."
 name = " ".join([user[0], user[1]])
 # Have the users select the transaction they want to make.
-"""
+
 while True:
     print(f"Hello {name},\nSelect the type of transaction "
           "you wish to make:\n")
@@ -454,122 +446,130 @@ while True:
     print('d. View your account balances')
     print('e. View your recent transactions (from the past 30 days')
     print('f. Exit\n')
-"""
-while True:
-    choice = input('Enter a-f: \n').lower()
-    if choice == "a":         # Withdrawal
-        amount = collect_mult_of_10("Enter how much you'd like "
-                                    "to withdraw in a multiple of 10: $\n")
-        # Update the balance and transaction history of the user.
-        withdraw(amount, user)
-        break
-    if choice == "b":         # Deposit
-        amount = collect_mult_of_10("Enter how much you are "
-                                    "depositing in a multiple of 10: $\n")
-        # Update the balance and transaction history of the user.
-        deposit(amount, user)
-        break
-    if choice == "c":         # Transfer
-        while True:
-            option = input("\nDo you wish to make a transfer "
-                           "from your savings account,\n"
-                           "or from your checking account?\n"
-                           "Enter 'a' for savings account\n"
-                           "'b' for checking account: \n").lower()
-            if option == 'a':
-                account_id = user[6]
-                break
-            elif option == 'b':
-                account_id = user[7]
-                break
-            else:
-                print("\nInvalid entry.  Enter 'a' or 'b'.")
-        while True:
-            # Have the users enter the recipient's account ID
-            # and check the validity of the input.
-            recip_acct_id = input("\nEnter the recipient's "
-                                         "account ID: \n")
-            recipient = get_recipient(recip_acct_id)
-            if not recipient:
-                print(f"\nThe given account ID {recip_acct_id} "
-                      "is not valid.")
-                while True:
-                    option = input("Enter 'a' to abort the transaction, "
-                                   "'b' to continue: \n").lower()
-                    if option == "a":
-                        print("Bye.  Have a nice day!")
-                        exit()
-                    elif option == "b":
-                        break
-                    else:
-                        print("\nInvalid entry.")
-                continue
-            # In case the account ID from which the users want
-            # to transfer the money is entered, tell them to reenter
-            # the right account ID of the recipient.
-            elif recip_acct_id == account_id:
-                print("\nYou entered the ID of the account from which "
-                      "you will make a transfer.\nPlease enter "
-                      "the account ID of the recipient.")
-                continue
-            # Collect transfer amount.
-            amount = collect_val("Enter the amount "
-                                 "you will transfer: \n")
-            # If there isn't enough money in the account,
-            # print the note below and terminate the program.
-            # Get the balance of the user.
-            test = accounts_sheet.col_values(1)
-            row_num = test.index(account_id) + 1
-            row = accounts_sheet.row_values(row_num) 
-            balance = row[5]
-            if Decimal(balance) < Decimal(amount):
-                print("There isn't sufficient money in the account."
-                      "The session will be terminated.")
-                exit()
-            # Have the users enter transfer notes (max 35 characters).
-            # Let them reenter the text if the length exceeds 35 characters.
-            trs_notes = validate_len(35)
-            # Print the transfer detail for confirmation.
-            print(f"\nYou will transfer ${amount} to\n"
-                  + " ".join([recipient[0], recipient[1]])
-                  + f"\nAccount ID: {recip_acct_id}\n"
-                    f"Transaction notes: {trs_notes}")
+    while True:
+        choice = input('Enter a-f: \n').lower()
+        if choice == "a":         # Withdrawal
+            amount = collect_mult_of_10("Enter how much you'd like "
+                                        "to withdraw in a multiple of 10: $\n")
+            # Update the balance and transaction history of the user.
+            withdraw(amount, user)
+            break
+        if choice == "b":         # Deposit
+            amount = collect_mult_of_10("Enter how much you are "
+                                        "depositing in a multiple of 10: $\n")
+            # Update the balance and transaction history of the user.
+            deposit(amount, user)
+            break
+        if choice == "c":         # Transfer
             while True:
-                # Ask the users if the transfer can be carried out,
-                # or they want to make changes.
-                option = input("\nEnter 'a' to proceed with this "
-                               "transfer,\nenter 'b' to make "
-                               "changes: \n").lower()
-                if option in ["a", "b"]:
+                option = input("\nDo you wish to make a transfer "
+                            "from your savings account,\n"
+                            "or from your checking account?\n"
+                            "Enter 'a' for savings account\n"
+                            "'b' for checking account: \n").lower()
+                if option == 'a':
+                    account_id = user[6]
+                    break
+                elif option == 'b':
+                    account_id = user[7]
                     break
                 else:
-                    print("Invalid entry")
-            if option == "a":
-                # Make updates regarding this transfer
-                transfer(amount, user, account_id, recipient, recip_acct_id, trs_notes)     
-                break
-    if choice == "d":         # "View your balances" option
-        # Get balances from DB and print them.
-        list_balances = get_balances(user)
-        print(f"\nYour savings account ID: {list_balances[0][0]}")
-        print(f"Balance: ${list_balances[0][1]}")
-        print(f"\nYour checking account ID: {list_balances[1][0]}")
-        print(f"Balance: ${list_balances[1][1]}\n")
-        break
-    if choice == "e":        # "View your recent transactions" option
-        # Get transaction records of the user.
-        list_trans = get_transactions(user_id)
-        # Sort the records into transactions around the savings account
-        # and those around the checking account.
-        svg_list = []
-        check_list = []
-        for entry in list_trans:
-            # Collect records of the savings account.
-            if entry[1] == "savings":
-                svg_list.append(entry)
-            else:
-                # Collect records of the checking account.
-                check_list.append(entry)
+                    print("\nInvalid entry.  Enter 'a' or 'b'.")
+            while True:
+                # Have the users enter the recipient's account ID
+                # and check the validity of the input.
+                recip_acct_id = input("\nEnter the recipient's "
+                                            "account ID: \n")
+                recipient = get_recipient(recip_acct_id)
+                if not recipient:
+                    print(f"\nThe given account ID {recip_acct_id} "
+                        "is not valid.")
+                    while True:
+                        option = input("Enter 'a' to abort the transaction, "
+                                    "'b' to continue: \n").lower()
+                        if option == "a":
+                            print("Bye.  Have a nice day!")
+                            exit()
+                        elif option == "b":
+                            break
+                        else:
+                            print("\nInvalid entry.")
+                    continue
+                # In case the account ID from which the users want
+                # to transfer the money is entered, tell them to reenter
+                # the right account ID of the recipient.
+                elif recip_acct_id == account_id:
+                    print("\nYou entered the ID of the account from which "
+                        "you will make a transfer.\nPlease enter "
+                        "the account ID of the recipient.")
+                    continue
+                # Collect transfer amount.
+                amount = collect_val("Enter the amount "
+                                    "you will transfer: \n")
+                # If there isn't enough money in the account,
+                # print the note below and terminate the program.
+                # Get the balance of the user.
+                test = ACCOUNTS.col_values(1)
+                row_num = test.index(account_id) + 1
+                row = ACCOUNTS.row_values(row_num) 
+                balance = row[5]
+                if Decimal(balance) < Decimal(amount):
+                    print("There isn't sufficient money in the account."
+                        "The session will be terminated.")
+                    exit()
+                # Have the users enter transfer notes (max 35 characters).
+                # Let them reenter the text if the length exceeds 35 characters.
+                trs_notes = validate_len(35)
+                # Print the transfer detail for confirmation.
+                print(f"\nYou will transfer ${amount} to\n"
+                    + " ".join([recipient[0], recipient[1]])
+                    + f"\nAccount ID: {recip_acct_id}\n"
+                        f"Transaction notes: {trs_notes}")
+                while True:
+                    # Ask the users if the transfer can be carried out,
+                    # or they want to make changes.
+                    option = input("\nEnter 'a' to proceed with this "
+                                "transfer,\nenter 'b' to make "
+                                "changes: \n").lower()
+                    if option in ["a", "b"]:
+                        break
+                    else:
+                        print("Invalid entry")
+                if option == "a":
+                    # Make updates regarding this transfer
+                    transfer(amount, user, account_id, recipient, recip_acct_id, trs_notes)     
+                    break
+        if choice == "d":         # "View your balances" option
+            # Get balances from DB and print them.
+            list_balances = get_balances(user)
+            print(f"\nYour savings account ID: {list_balances[0][0]}")
+            print(f"Balance: ${list_balances[0][1]}")
+            print(f"\nYour checking account ID: {list_balances[1][0]}")
+            print(f"Balance: ${list_balances[1][1]}\n")
+            break
+        if choice == "e":        # "View your recent transactions" option
+            # Get transaction records of the user.
+            list_trans = get_transactions(user_id)
+            # Sort the records into transactions around the savings account
+            # and those around the checking account.
+            svg_list = []
+            check_list = []
+            for entry in list_trans:
+                # Collect records of the savings account.
+                if entry[0] == "savings":
+                    # Get only date, transaction type, transfer to/from,
+                    # transfer notes and amount
+                    list = []
+                    for n in range(1, 6):
+                        list.append(entry[n])
+                    svg_list.append(list)
+                else:
+                    # Collect records of the checking account.
+                    list = []
+                    for n in range(1, 6):
+                        list.append(entry[n])
+                    check_list.append(list)
+            print(check_list)
             # Get current balances.
             list_balances = get_balances(user)
             # Store the balances of both accounts in variables.
@@ -581,15 +581,32 @@ while True:
                         "Transfer notes", "Amount"]
             space = " "
             # Print the table
-            #print("====================================================")
-            #print("*Savings account transactions\n")
+            print("====================================================")
+            print("*Savings account transactions\n")
             display_with_spaces(headings)
-            print_row(svg_list)
-            #print(f"\n{space*78}**Current balance:{space*14}${svg_balance}")
-            #print("====================================================")
-            #print("*Checking account transactions\n")
+            print(f"\n{space*78}**Current balance:{space*14}${svg_balance}")
+            print("====================================================")
+            print("*Checking account transactions\n")
             display_with_spaces(headings)
             print_row(check_list)
-            #print(f"\n{space*78}**Current balance:"
-            #      f"{space*14}${check_balance}\n")
+            print(f"\n{space*78}**Current balance:"
+                f"{space*14}${check_balance}\n")
             break
+        if choice == "f":  # Exit
+            print("Bye.  Have a nice day!")
+            exit()
+        else:
+            print('Invalid entry.  Please try again.')
+    while True:
+        # Ask if the users want to make further transactions.
+        # If they do, send them back to the selections of transactions.
+        # If not, terminate the program.
+        choice = input("Would you like to make further transactions? "
+                       "(y/n): \n").lower()
+        if choice == "n":
+            print("Thank you.  Have a nice day!")
+            exit()
+        elif choice == "y":
+            break
+        else:
+            print("Invalid entry.  Please enter 'y' or 'n'")
