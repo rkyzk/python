@@ -264,8 +264,63 @@ def collect_val(msg):
         else:
             print("Invalid entry.  Enter values with or without "
                   "number of cents (e.g. '50' or '50.00').")
-def transfer(amount, user, account_id, recipient, recip_acct_id):
-    pass
+
+
+def transfer(amount, user, account_id, recipient, recip_acct_id, trs_notes):
+    """
+    Calculates the new balances of the sender and the recipient,
+    and update the data in tables "Accounts" and "Transactions.
+
+    :arguments: amount: transfer amount
+                user: information of the sender
+                account_id: the sender's account ID
+                recipient: information of the recipienet
+                recip_acct_id: the recipient's account ID
+    """
+    # Get the balance of the sender.
+    test = accounts_sheet.col_values(1)
+    row_num = test.index(account_id) + 1
+    row = accounts_sheet.row_values(row_num) 
+    balance = row[5]
+    # Calculate the new balance.
+    new_balance = Decimal(balance) - Decimal(amount)
+    # Update the balance
+    accounts_sheet.update(f"F{row_num}", str(new_balance))
+    # Add transaction record
+    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    amt_minus = "".join(["-", amount])
+    if account_id[1] == "1":
+        account_type = "saving"
+    else:
+        account_type = "checking"
+    recip_name = " ".join([recipient[0], recipient[1]])
+    trs_person = " ".join(["to", recip_name])
+    data = [account_id, account_type, user[2], "transfer sent", 
+            trs_person, trs_notes, amt_minus, date]
+    transactions_sheet.append_row(data)
+    # Calculate and update the recipient's database
+    test = accounts_sheet.col_values(1)
+    row_num = test.index(recip_acct_id) + 1
+    row = accounts_sheet.row_values(row_num) 
+    balance = row[5]
+    # Calculate the new balance.
+    new_balance = Decimal(balance) + Decimal(amount)
+    # Update the balance
+    accounts_sheet.update(f"F{row_num}", str(new_balance))
+    # Add transaction record
+    amt_plus = "".join(["+", amount])
+    if recip_acct_id[1] == "1":
+        account_type = "saving"
+    else:
+        account_type = "checking"
+    sender_name = " ".join([user[0], user[1]])
+    trs_person = " ".join(["from", sender_name])
+    data = [recip_acct_id, account_type, recipient[2], "transfer received", 
+            trs_person, trs_notes, amt_plus, date]
+    transactions_sheet.append_row(data)
+    print(f"\n${amount} has been transferred.\n"\
+          "Please take your card.")
+    
 
 pin = "111111"
 salt = os.urandom(32)
@@ -402,8 +457,8 @@ while True:
             trs_notes = validate_len(35)
             # Print the transfer detail for confirmation.
             print(f"\nYou will transfer ${amount} to\n"
-                  + " ".join(recipient[0], recipient[1])
-                  + f"Account ID: {recip_acct_id}\n"
+                  + " ".join([recipient[0], recipient[1]])
+                  + f"\nAccount ID: {recip_acct_id}\n"
                     f"Transaction notes: {trs_notes}")
             while True:
                 # Ask the users if the transfer can be carried out,
@@ -416,8 +471,6 @@ while True:
                 else:
                     print("Invalid entry")
             if option == "a":
+                # Make updates regarding this transfer
+                transfer(amount, user, account_id, recipient, recip_acct_id, trs_notes)     
                 break
-            # Make updates regarding this transfer
-            transfer(amount, user, account_id, recipient, recip_acct_id)     
-            break
-"""
