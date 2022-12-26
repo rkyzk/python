@@ -320,7 +320,28 @@ def transfer(amount, user, account_id, recipient, recip_acct_id, trs_notes):
     transactions_sheet.append_row(data)
     print(f"\n${amount} has been transferred.\n"\
           "Please take your card.")
-    
+
+
+def get_balances(user):
+    """
+    Gets the balance of the savings and checking accounts
+    of the user.
+
+    :argument: user_id: user ID
+    :return: balances of savings and checking accounts
+    :rtype: list
+    """
+    # Get savings account info
+    test = accounts_sheet.col_values(1)
+    row_num = test.index(user[6]) + 1
+    row = accounts_sheet.row_values(row_num) 
+    svg_balance = [user[6], row[5]]
+    row_num = test.index(user[7]) + 1
+    row = accounts_sheet.row_values(row_num) 
+    check_balance = [user[7], row[5]]
+    list = [svg_balance, check_balance]
+    return list
+
 
 pin = "111111"
 salt = os.urandom(32)
@@ -474,3 +495,11 @@ while True:
                 # Make updates regarding this transfer
                 transfer(amount, user, account_id, recipient, recip_acct_id, trs_notes)     
                 break
+    if choice == "d":         # "View your balances" option
+        # Get balances from DB and print them.
+        list_balances = get_balances(user)
+        print(f"\nYour savings account ID: {list_balances[0][0]}")
+        print(f"Balance: ${list_balances[0][1]}")
+        print(f"\nYour checking account ID: {list_balances[1][0]}")
+        print(f"Balance: ${list_balances[1][1]}\n")
+        break
