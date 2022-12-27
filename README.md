@@ -3,6 +3,8 @@
 ## General Overview
 North, East & South Banks ATM System is a Python ATM terminal application.  Users can make various imaginary transactions: withdrawals, deposits, transfers, displaying their balances as well as recent transactions.  The data of the customers, accounts and transactions are stored in three separate tables named “Users,” “Accounts” and “Transactions” in google spread sheets. 
 
+![image](atm.jpg)
+
 ## How to use the program
 - First the users will be greeted and will enter their ID.  
 - Then they will be asked to choose among following transactions:
