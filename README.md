@@ -1,14 +1,12 @@
-# General Overview of ATM System Application
+# Noth, East & South Banks ATM System
 
-Banking System Application is a Python ATM terminal application.  Users can make various imaginary transactions: withdrawals, deposits, transfers, viewing their balances and viewing recent transactions.  The data of the customers, accounts and transactions are stored in three separate tables named “Users,” “Accounts” and “Transactions” respectively in google spread sheet. 
+## General Overview
+North, East & South Banks ATM System is a Python ATM terminal application.  Users can make various imaginary transactions: withdrawals, deposits, transfers, displaying their balances as well as recent transactions.  The data of the customers, accounts and transactions are stored in three separate tables named “Users,” “Accounts” and “Transactions” in google spread sheets. 
 
-### Notes about user and account IDs: 
-- User IDs have 7 digits.  The first number tells which bank the customer belongs to.  (‘1’ indicates North Bank; ‘2’: East Bank; ‘3’: South Bank.)  The rest 6 digits are for identifying customers.  
-- The account IDs have 8 digits.  The first number tells which bank the accounts belong to, just as user IDs, and the second number tells if the account is savings or checking account.  ‘1’ indicates savings account, and ‘2’ indicates checking account.  For example, 11000001 is an ID of a savings account at North Bank.  12000001 is an ID of a checking account at North Bank.
-- Each customer should have unique user and account IDs.  
+## How to use the program
+- First the users will be greeted and will enter their ID.  
+- Then they will be asked to choose among following transactions:
 
-### How to use the program
-- The users will be asked to choose choose which transactions they want to make
 a.  Withdraw
 b.  Deposit
 c.  Transfer
@@ -16,15 +14,19 @@ d.  View the account balances
 e.  View recent transactions (from the past 30 days)
 f.  Exit
 
+*Notes about user and account IDs*
+- User IDs have 7 digits.  The first number tells which bank the customer belongs to.  (‘1’ indicates North Bank; ‘2’: East Bank; ‘3’: South Bank.)  The rest 6 digits are for identifying customers.  
+- The account IDs have 8 digits.  The first number tells which bank the accounts belong to, just as user IDs, and the second number tells if the account is savings or checking account.  ‘1’ indicates savings account, and ‘2’ indicates checking account.  For example, 11000001 is an ID of a savings account at North Bank.  12000001 is an ID of a checking account at North Bank.
+- Each customer should have unique user and account IDs.  
+
 A. Withdraw
-- Users are asked to enter the amount they want to withdraw in a multiple of 10.
-- If the requested withdrawal amount is greater than the balance in their account, the system will tell the customers that there isn’t sufficient money for the transaction, and the program will be terminated.  
-- Otherwise the new balance will be calculated by subtracting the withdrawal amount from the old balance.
-- The balance will be updated, and the transaction record will be added to the database.  
+- Users will enter the amount they want to withdraw in a multiple of 10.
+- If the requested withdrawal amount is greater than the balance in their account, the system will tell them there isn’t sufficient money for the transaction, and the program will be terminated.  
+- Otherwise the new balance will be calculated and updated and the transaction record will also be added to the data system.  
 
 B. Deposit
-- In real scenario, users will insert money, and the machine will count the value of deposit.  In this program, the system asks the users to input the value manually. 
-- The new balance will be calculated and will be updated in the database, and the transaction record will be added as well.
+- In real scenario, users will insert money, and the machine will count the value.  In this program, users need to input the value manually. 
+- The new balances and the transaction record will be updated.
 
 C. Transfer
 - Users will input:
@@ -34,26 +36,27 @@ C. Transfer
 4. transfer notes (optional, max 35 characters)
 
 - They will be asked to reenter valid values if 
-1. the recipient’s ID is not found in the database
+1. the recipient’s ID is not found in the data system
 2. the account ID from which the user wants to make the transfer is entered as recipient’s ID
 3. empty strings or non-numeric values are entered as transfer amount
 
 - The program will be terminated, if the specified account of the sender doesn’t have sufficient money for the transfer.
-
-- Notes: Users can transfer money from their own checking account to their savings account, and vice versa.  
-The money value should be entered in the form of an integer or with values of cents (e.g. “50” or “50.00”)
+- Users can transfer money from their own checking account to their savings account, and vice versa.  
+- The money value should be entered in the form of an integer or with values of cents (e.g. “50” or “50.00”)
 
 D. View your balances
-- The system will obtain the balances of the user’s savings and checking accounts and will display the values in a table.  
+- The system will obtain the balances of users' savings and checking accounts and will display them in a table.  
 
-E. Exit
+E. Transactions
+- The system will acquire the given user's transaction history in both accounts from the past 30 days and display them in a table.
+
+F. Exit
 - The program will be terminated.  
 
 Lastly, after each transaction, the system asks the users if they want to make further transactions.  Until they decide to exit the program, they can continue to make transactions.
 
 ## Future features:
 - I will write program that will have users enter pin numbers for login and a validation system.
-- I will add program to display transaction history.
 
 # Testing:
 - I passed the code through CI Python Linter and confirmed there are no problems.
@@ -62,7 +65,7 @@ Lastly, after each transaction, the system asks the users if they want to make f
 - I tested that all prompt messages are clear and that there’s no confusion for users as to how to use the program.  
 
 ## Bugs:
-- While loop didn't function well.  I solved the issue by placing indents correctly.
+- Some while loops didn't function well.  I solved the issue by placing indents correctly.
 
 ## Validator Testing: 
 No errors were returned from https://pep8ci.herokuapp.com
@@ -78,3 +81,4 @@ This project was deployed using Code Institute's mock terminal for Heroku.
 
 ## Credits:
 The section in this readme file "Deployment" was taken from the readme file of Love Sandwiches Project by Code Institute.
+I got help from my tutor Jubril Akkolade at CI.
