@@ -1,3 +1,5 @@
+"""This module holds functions and the program to run an ATM system."""
+
 import gspread
 from google.oauth2.service_account import Credentials
 from decimal import Decimal
@@ -15,45 +17,11 @@ SCOPED_CREDS = CREDS.with_scopes(SCOPE)
 GSPREAD_CLIENT = gspread.authorize(SCOPED_CREDS)
 SHEET = GSPREAD_CLIENT.open('atm-system')
 
-# Set worksheets to variables
+# Set worksheet names to variables
 USERS = SHEET.worksheet("users")
 ACCOUNTS = SHEET.worksheet("accounts")
 TRANSACTIONS = SHEET.worksheet("transactions")
 
-
-def validate_pin(user_id, salt):
-    if username == "admin963":
-        stored_key = get_admin_pass_info(username)[0]
-        salt = get_admin_pass_info(username)[1]
-        new_key = hash_pin_with_salt(password, salt)
-        if new_key == stored_key:
-            return True
-    return False
-
-def hash_pin_with_salt(pin, salt):
-    """Hash the pin with a given salt and return the key.
-
-    :argument: pin
-               salt
-    :return: key: hashed key
-    :rtype: byte
-    """
-    key = hashlib.pbkdf2_hmac(
-        'sha256',
-        pin.encode('utf-8'),  # convert the pin to bytes
-        salt,
-        100000,  # number of iterations of SHA256
-        dklen=128  # get a 128-byte key
-        )
-    return key
-"""
-pin = input('Enter your pin: ')
-string_salt = b'\xc9.\xd5\\SE\xd9\x15\x9e\xad[2$R\xdf&K\xfa\xe4E@(MR\x8a\xab\x0b\xb7}\xd2\x93\xbe'
-arr2 = bytes(string_salt, 'utf-8')
-print(string_salt)
-new_key = hash_pin_with_salt(pin, arr2)
-str_stored_key = b'\xfe\x96\xd5\x08s\xf5\x07\xd3a\x7fm\x1b\x80\x8f\xf5a0\xa6V\xf6\x92,Y\xe9Y\xe2\xb0\x11.On\xfb\x7f\x1b/x^\xbbi\x91\xec\x13\xa3c5,1\xf1\xaa\xf6\xd4\x17G]\xba\xd0Z\xc6\xca\x1c<\xe3\x82f\xa2Hv\x1b\xa2W\xf0\x86HK#\x8d\xec\x8f\x95\xf9\xf7\xe0\xd7\x97\x1c\xc5pz\x97&\x07M}\xc4\xc2\xe3\x0c\xe69\xa3Z\xc8\x15f\x00\xff\x82\x1ez\x15\xaeMz\xfa\x9a\xbeO,3XZa\xc1\xbd\xeb\x1dF\xb9'
-"""
 
 def get_user_info(user_id):
     """
@@ -106,7 +74,7 @@ def withdraw(amount, user):
     row = ACCOUNTS.row_values(row_num)
     balance = row[5]
     if Decimal(balance) < Decimal(amount):
-        print("There isn't sufficient money in the account."
+        print("There isn't sufficient money in the account.  "
               "The session will be terminated.")
         exit()
     # Calculate the new balance.
@@ -120,7 +88,7 @@ def withdraw(amount, user):
             "NA", "NA", amt_minus, date]
     TRANSACTIONS.append_row(data)
     print(f"\n${amount} has been withdrawn from your checking"
-          f"account.\nPlease take your money and card.")
+          f"account.\nPlease take your money.")
 
 
 def deposit(amount, user):
@@ -147,8 +115,8 @@ def deposit(amount, user):
     data = [user[7], "checking", user[2], "deposit",
             "NA", "NA", amt_plus, date]
     TRANSACTIONS.append_row(data)
-    print(f"\n${amount} has been added to your checking"
-          f"account.\nPlease take your card.")
+    print(f"\n${amount} has been added to your checking "
+          f"account.\n")
 
 
 def get_recipient(account_id):
@@ -289,8 +257,7 @@ def transfer(amount, user, account_id, recipient, recip_acct_id, trs_notes):
     data = [recip_acct_id, account_type, recipient[2], "transfer received",
             trs_person, trs_notes, amt_plus, date]
     TRANSACTIONS.append_row(data)
-    print(f"\n${amount} has been transferred.\n"
-          "Please take your card.")
+    print(f"\n${amount} has been transferred.\n")
 
 
 def get_balances(user):
@@ -381,13 +348,13 @@ while True:
 name = " ".join([user[0], user[1]])
 # Have the users select the transaction they want to make.
 while True:
-    print(f"Hello {name},\nSelect the type of transaction "
+    print(f"\nHello {name},\nSelect the type of transaction "
           "you wish to make:\n")
     print('a. Withdrawal')
     print('b. Deposit')
     print('c. Transfer')
     print('d. View your account balances')
-    print('e. View your recent transactions')
+    print('e. View your recent transactions from the past 30 days')
     print('f. Exit\n')
     while True:
         choice = input('Enter a-f: \n').lower()
@@ -457,7 +424,7 @@ while True:
                 row = ACCOUNTS.row_values(row_num)
                 balance = row[5]
                 if Decimal(balance) < Decimal(amount):
-                    print("There isn't sufficient money in the account."
+                    print("There isn't sufficient money in the account.  "
                           "The session will be terminated.")
                     exit()
                 # Have the users enter transfer notes (max 35 characters).
