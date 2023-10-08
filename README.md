@@ -5,6 +5,9 @@ North, East & South Banks ATM System is a Python ATM terminal application.  User
 
 ![image](atm.jpg)
 
+Deployed Project URL:
+https://atm-python-project-c3c81fbffeab.herokuapp.com/
+
 ## How to use the program
 - First the users will be greeted and will enter their ID.  
 - Then they will be asked to choose among following transactions:
@@ -83,7 +86,7 @@ This project was deployed using Code Institute's mock terminal for Heroku.
 
 ## Credits:
 The section in this readme file "Deployment" was taken from the readme file of Love Sandwiches Project by Code Institute.
-I got help from my tutor Jubril Akkolade at CI.
+Many thanks to my mentor Jubril Akolade.
 
 
 ---
