@@ -84,3 +84,18 @@ This project was deployed using Code Institute's mock terminal for Heroku.
 ## Credits:
 The section in this readme file "Deployment" was taken from the readme file of Love Sandwiches Project by Code Institute.
 I got help from my tutor Jubril Akkolade at CI.
+
+
+---
+Notes for myself
+How to connect APIs to the project
+- go to google cloud, create a new project
+- add Google Drive API
+- select 'application data'
+- enter name and email, select 'Editor' for the role
+- go to 'Key' tab.
+- click on 'add keys' and select json
+- credentails will be downloaded.
+- enable Google sheets API as well (enable, and no need to take further steps)
+- add the downloaded file to the workspace, rename the file to 'creds.json'
+- copy the email from the creds.json, go to the google spread sheet, add this email to 'Share' list
